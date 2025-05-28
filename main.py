@@ -12,33 +12,32 @@ app = Flask(__name__)
 
 @app.route("/relatorio-diario", methods=["GET"])
 def relatorio_diario():
-    # 1. Executa a query do relatório
+    # Consulta ao BigQuery
     client = bigquery.Client()
     QUERY = """
         SELECT
-            user_email,
-            DATE(date) AS data_envio,
-            COUNT(*) AS total_pdfs
-        FROM `SEU_PROJECT_ID.SEU_DATASET.SEU_TABLE`
-        WHERE DATE(date) = CURRENT_DATE("America/Sao_Paulo")
-        GROUP BY user_email, data_envio
+            data_envio,
+            num_paginas
+        FROM `neogov-default.arquivos.relatorios_uploads`
+        WHERE DATE(data_envio) = CURRENT_DATE("America/Sao_Paulo")
         ORDER BY data_envio DESC
     """
     df = client.query(QUERY).to_dataframe()
     if df.empty:
         return "Nenhum upload hoje.", 200
 
+    # Gera CSV temporário
     file_path = '/tmp/relatorio_diario.csv'
     df.to_csv(file_path, index=False)
 
-    # 2. Dados do e-mail (use variáveis de ambiente!)
+    # Dados do e-mail (via variáveis de ambiente para segurança)
     remetente = os.environ.get('EMAIL_REMETENTE')
     senha = os.environ.get('EMAIL_SENHA')
     destinatarios = os.environ.get('EMAIL_DESTINATARIOS', '').split(',')
     assunto = 'Relatório Diário de Uploads PDF'
     corpo = 'Segue em anexo o relatório diário de uploads de PDFs.'
 
-    # 3. Monta e envia o e-mail
+    # Monta e envia o e-mail
     msg = MIMEMultipart()
     msg['From'] = remetente
     msg['To'] = ", ".join(destinatarios)
@@ -52,7 +51,7 @@ def relatorio_diario():
         part.add_header('Content-Disposition', f'attachment; filename=relatorio_diario.csv')
         msg.attach(part)
 
-    # Envio SMTP (exemplo com Gmail)
+    # Envio via SMTP
     server = smtplib.SMTP('smtp.gmail.com', 587)
     server.starttls()
     server.login(remetente, senha)
