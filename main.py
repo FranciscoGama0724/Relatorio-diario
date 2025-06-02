@@ -30,10 +30,9 @@ def relatorio_diario():
     file_path = '/tmp/relatorio_diario.csv'
     df.to_csv(file_path, index=False)
 
-    # Dados do e-mail (via variáveis de ambiente para segurança)
-    remetente = os.environ.get('EMAIL_REMETENTE')
-    senha = os.environ.get('EMAIL_SENHA')
-    destinatarios = os.environ.get('EMAIL_DESTINATARIOS', '').split(',')
+    remetente = os.environ.get('franciscogama147@gmail.com')
+    senha = os.environ.get('smkq mbbe nwtt zuki')
+    destinatarios = os.environ.get('francisco.gama@neogov.com.br', '').split(',')
     assunto = 'Relatório Diário de Uploads PDF'
     corpo = 'Segue em anexo o relatório diário de uploads de PDFs.'
 
